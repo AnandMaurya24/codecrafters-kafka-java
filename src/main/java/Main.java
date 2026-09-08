@@ -22,7 +22,7 @@ public class Main {
        byte[] buff = new byte[1024];
 
        clientSocket.getInputStream().read(buff);
-       clientSocket.getOutputStream().write(0, 0, 0, 4, buff[8], buff[9], buff[10], buff[11]);
+       clientSocket.getOutputStream().write(new byte[] {0, 0, 0, 4, buff[8], buff[9], buff[10], buff[11]});
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      } finally {
