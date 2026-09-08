@@ -19,7 +19,10 @@ public class Main {
        serverSocket.setReuseAddress(true);
        // Wait for connection from client.
        clientSocket = serverSocket.accept();
-       clientSocket.getOutputStream().write(new byte[]{0, 0, 0, 0, 0 , 0, 0, 7});
+       byte[] buff = new byte[1024];
+
+       clientSocket.getInputStream().read(buff);
+       clientSocket.getOutputStream().write(0, 0, 0, 4, buff[8], buff[9], buff[10], buff[11]);
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      } finally {
