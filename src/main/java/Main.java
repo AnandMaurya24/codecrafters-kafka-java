@@ -1,4 +1,5 @@
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,17 +33,23 @@ public class Main {
        short apiVersionValue = ByteBuffer.wrap(apiVersion).getShort();
        short errorCode = (apiVersionValue >= 0 && apiVersionValue <= 4) ? (short) 0 : (short) 35;
 
-       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 19});  // message_size: 19 bytes
-       var res = ByteBuffer.allocate(4).putInt(correlationId).array();
-       clientSocket.getOutputStream().write(res);                         // correlation_id
-       clientSocket.getOutputStream().write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
-       clientSocket.getOutputStream().write(new byte[] {02});             // api_keys: COMPACT_ARRAY length (1 entry -> 2)
-       clientSocket.getOutputStream().write(new byte[] {00, 18});         // api_key: 18 (ApiVersions)
-       clientSocket.getOutputStream().write(new byte[] {00, 00});         // min_version: 0
-       clientSocket.getOutputStream().write(new byte[] {00, 04});         // max_version: 4
-       clientSocket.getOutputStream().write(new byte[] {00});             // TAG_BUFFER (for this api_keys entry)
-       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 00}); // throttle_time_ms: 0
-       clientSocket.getOutputStream().write(new byte[] {00});             // TAG_BUFFER (for the response body)
+       ByteArrayOutputStream body = new ByteArrayOutputStream();
+       body.write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
+       body.write(2);                                                  // api_keys: COMPACT_ARRAY length (1 entry -> N+1)
+       body.write(ByteBuffer.allocate(2).putShort((short) 18).array()); // api_key: 18 (ApiVersions)
+       body.write(ByteBuffer.allocate(2).putShort((short) 0).array());  // min_version
+       body.write(ByteBuffer.allocate(2).putShort((short) 4).array());  // max_version
+       body.write(0);                                                  // TAG_BUFFER for this api_keys entry
+       body.write(ByteBuffer.allocate(4).putInt(0).array());            // throttle_time_ms
+       body.write(0);                                                  // TAG_BUFFER for the response body
+       byte[] bodyBytes = body.toByteArray();
+
+       int messageSize = 4 + bodyBytes.length; // correlation_id + body
+
+       var out = clientSocket.getOutputStream();
+       out.write(ByteBuffer.allocate(4).putInt(messageSize).array());
+       out.write(ByteBuffer.allocate(4).putInt(correlationId).array());
+       out.write(bodyBytes);
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      } finally {
