@@ -29,10 +29,13 @@ public class Main {
        byte[] apiVersion = in.readNBytes(2);
        int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
 
+       short apiVersionValue = ByteBuffer.wrap(apiVersion).getShort();
+       short errorCode = (apiVersionValue >= 0 && apiVersionValue <= 4) ? (short) 0 : (short) 35;
+
        clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 19});  // message_size: 19 bytes
        var res = ByteBuffer.allocate(4).putInt(correlationId).array();
        clientSocket.getOutputStream().write(res);                         // correlation_id
-       clientSocket.getOutputStream().write(new byte[] {00, 00});         // error_code: 0
+       clientSocket.getOutputStream().write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
        clientSocket.getOutputStream().write(new byte[] {02});             // api_keys: COMPACT_ARRAY length (1 entry -> 2)
        clientSocket.getOutputStream().write(new byte[] {00, 18});         // api_key: 18 (ApiVersions)
        clientSocket.getOutputStream().write(new byte[] {00, 00});         // min_version: 0
