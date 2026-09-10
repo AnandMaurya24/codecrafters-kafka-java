@@ -1,6 +1,8 @@
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class Main {
   public static void main(String[] args){
@@ -19,10 +21,18 @@ public class Main {
        serverSocket.setReuseAddress(true);
        // Wait for connection from client.
        clientSocket = serverSocket.accept();
-       byte[] buff = new byte[1024];
+       BufferedInputStream in = new BufferedInputStream(clientSocket.getInputStream());
+       byte[] messageSizeBytes = in.readNBytes(4);
+        int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
 
-       clientSocket.getInputStream().read(buff);
-       clientSocket.getOutputStream().write(new byte[] {0, 0, 0, 4, buff[8], buff[9], buff[10], buff[11]});
+        byte[] apiKey = in.readNBytes(2);
+        byte[] apiVersion = in.readNBytes(2);
+        int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
+
+        clientSocket.getOutputStream().write(messageSizeBytes);
+        var res = ByteBuffer.allocate(4).putInt(correlationId).array();
+        clientSocket.getOutputStream().write(res);
+        clientSocket.getOutputStream().write(new byte[] {0, 35});
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      } finally {
