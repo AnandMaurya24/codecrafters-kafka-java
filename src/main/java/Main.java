@@ -29,13 +29,17 @@ public class Main {
        byte[] apiVersion = in.readNBytes(2);
        int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
 
-       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 12});
+       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 19});  // message_size: 19 bytes
        var res = ByteBuffer.allocate(4).putInt(correlationId).array();
-       clientSocket.getOutputStream().write(res);
-       clientSocket.getOutputStream().write(new byte[] {00, 00});
-       clientSocket.getOutputStream().write(new byte[] {00, 12});
-       clientSocket.getOutputStream().write(new byte[] {00, 00});
-       clientSocket.getOutputStream().write(new byte[] {00, 04});
+       clientSocket.getOutputStream().write(res);                         // correlation_id
+       clientSocket.getOutputStream().write(new byte[] {00, 00});         // error_code: 0
+       clientSocket.getOutputStream().write(new byte[] {02});             // api_keys: COMPACT_ARRAY length (1 entry -> 2)
+       clientSocket.getOutputStream().write(new byte[] {00, 18});         // api_key: 18 (ApiVersions)
+       clientSocket.getOutputStream().write(new byte[] {00, 00});         // min_version: 0
+       clientSocket.getOutputStream().write(new byte[] {00, 04});         // max_version: 4
+       clientSocket.getOutputStream().write(new byte[] {00});             // TAG_BUFFER (for this api_keys entry)
+       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 00}); // throttle_time_ms: 0
+       clientSocket.getOutputStream().write(new byte[] {00});             // TAG_BUFFER (for the response body)
      } catch (IOException e) {
        System.out.println("IOException: " + e.getMessage());
      } finally {
