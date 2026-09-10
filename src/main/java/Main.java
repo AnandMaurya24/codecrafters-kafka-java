@@ -29,7 +29,7 @@ public class Main {
        byte[] apiVersion = in.readNBytes(2);
        int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
 
-       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 21});
+       clientSocket.getOutputStream().write(new byte[] {00, 00, 00, 12});
        var res = ByteBuffer.allocate(4).putInt(correlationId).array();
        clientSocket.getOutputStream().write(res);
        clientSocket.getOutputStream().write(new byte[] {00, 00});
