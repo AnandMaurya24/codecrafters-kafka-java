@@ -24,7 +24,6 @@ public class Main {
        clientSocket = serverSocket.accept();
        BufferedInputStream in = new BufferedInputStream(clientSocket.getInputStream());
        byte[] messageSizeBytes = in.readNBytes(4);
-       int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
 
        byte[] apiKey = in.readNBytes(2);
        byte[] apiVersion = in.readNBytes(2);
