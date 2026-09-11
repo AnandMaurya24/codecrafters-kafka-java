@@ -30,7 +30,8 @@ public class Main {
            break; // client closed the connection
          }
 
-         int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
+        //  int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
+         int messageSize = 4 + bodyBytes.length; // correlation_id + body
          byte[] apiKey = in.readNBytes(2);
          byte[] apiVersion = in.readNBytes(2);
          int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
@@ -54,7 +55,7 @@ public class Main {
          body.write(0);                                                  // TAG_BUFFER for the response body
          byte[] bodyBytes = body.toByteArray();
 
-         int messageSize = 4 + bodyBytes.length; // correlation_id + body
+        
 
          var out = clientSocket.getOutputStream();
          out.write(ByteBuffer.allocate(4).putInt(messageSize).array());
