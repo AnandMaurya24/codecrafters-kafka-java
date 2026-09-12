@@ -53,10 +53,11 @@ public class Main {
          body.write(ByteBuffer.allocate(4).putInt(0).array());            // throttle_time_ms
          body.write(0);                                                  // TAG_BUFFER for the response body
          byte[] bodyBytes = body.toByteArray();
-         int responseSize = 4 + bodyBytes.length; // correlation_id + body
+
+         int messageSize = 4 + bodyBytes.length; // correlation_id + body
 
          var out = clientSocket.getOutputStream();
-         out.write(ByteBuffer.allocate(4).putInt(responseSize).array());
+         out.write(ByteBuffer.allocate(4).putInt(messageSize).array());
          out.write(ByteBuffer.allocate(4).putInt(correlationId).array());
          out.write(bodyBytes);
        }
