@@ -30,15 +30,11 @@ public class Main {
            break; // client closed the connection
          }
 
-         int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt(); // size of THIS request
+         int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
+
          byte[] apiKey = in.readNBytes(2);
          byte[] apiVersion = in.readNBytes(2);
          int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
-
-         // Skip the rest of the request (client_id, tagged fields, body) -
-         // we only care about the header fields above for ApiVersions.
-         int bytesReadSoFar = 2 + 2 + 4; // apiKey + apiVersion + correlationId
-         in.skipNBytes(messageSize - bytesReadSoFar);
 
          short apiVersionValue = ByteBuffer.wrap(apiVersion).getShort();
          short errorCode = (apiVersionValue >= 0 && apiVersionValue <= 4) ? (short) 0 : (short) 35;
@@ -54,7 +50,7 @@ public class Main {
          body.write(0);                                                  // TAG_BUFFER for the response body
          byte[] bodyBytes = body.toByteArray();
 
-         int messageSize = 4 + bodyBytes.length; // correlation_id + body
+        //  int messageSize = 4 + bodyBytes.length; // correlation_id + body
 
          var out = clientSocket.getOutputStream();
          out.write(ByteBuffer.allocate(4).putInt(messageSize).array());
