@@ -30,7 +30,7 @@ public class Main {
            break; // client closed the connection
          }
 
-         int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
+        //  int messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
 
          byte[] apiKey = in.readNBytes(2);
          byte[] apiVersion = in.readNBytes(2);
