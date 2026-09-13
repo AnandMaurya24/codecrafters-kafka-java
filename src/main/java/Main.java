@@ -52,10 +52,10 @@ public class Main {
         byte[] client_id = in.readNBytes(2);
         byte[] contents = in.readNBytes(9);
         byte[] tag_buffer = in.readNBytes(1);
-        int array_length = ByteBuffer.wrap(in.readNBytes(1)).getInt();
-        int topic_name_length = ByteBuffer.wrap(in.readNBytes(1)).getInt();
+        int array_length = in.readNBytes(1)[0] & 0xFF;
+        int topic_name_length = in.readNBytes(1)[0] & 0xFF;
         byte[] topic_name = in.readNBytes(topic_name_length - 1);
-        int remaining = requestMessageSize - 8 - 2 - 9 - 1 - 1 - (topic_name_length - 1);
+        int remaining = requestMessageSize - 8 - 2 - 9 - 1 - 1 - 1 - (topic_name_length - 1);
         if (remaining > 0) {
           in.readNBytes(remaining);
         } 
@@ -69,13 +69,13 @@ public class Main {
         body.write(2);  // topic_array
         body.write(ByteBuffer.allocate(2).putShort((short) 03).array()); //error_code ==> UNKNOWN_TOPIC_OR_PARTITION
         body.write(topic_name_length);                                    // name length:
-        body.write(ByteBuffer.allocate(topic_name_length - 1).putChar( topic_name)); // topic name 
+        body.write(topic_name);                                          // topic name
         body.write(ByteBuffer.allocate(16).putShort((short) 0).array()); //topic_id
-        body.write(ByteBuffer.allocate(2).putShort((short) 0).array()); //is_internal
+        body.write(0); // is_internal (false) //is_internal
         body.write(1);                                                   // partitions array
         body.write(ByteBuffer.allocate(4).putShort((short) 0).array()); //topic_authorized_operations
         body.write(0);                                                   // tag_buffer
-        body.write(ByteBuffer.allocate(2).putShort((short) -1).array());
+        body.write(0xFF); // next_cursor = -1 (null)
         body.write(0);                                                   // tag_buffer
         // body.write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
         // body.write(3);                                                  // api_keys: COMPACT_ARRAY length (1 entry -> N+1)
