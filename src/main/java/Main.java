@@ -60,7 +60,7 @@ public class Main {
         body.write(ByteBuffer.allocate(2).putShort((short) 0).array());  // min_version
         body.write(ByteBuffer.allocate(2).putShort((short) 4).array());  // max_version
         body.write(0);                                                  // TAG_BUFFER for this api_keys entry
-        body.write(75); // api_key: 75 (DescribeTopicPartitions)
+        body.write(ByteBuffer.allocate(2).putShort((short) 75).array());
         body.write(ByteBuffer.allocate(2).putShort((short) 0).array());  // min_version
         body.write(ByteBuffer.allocate(2).putShort((short) 0).array());
         body.write(0);                                                  // TAG_BUFFER for this api_keys entry
