@@ -70,7 +70,7 @@ public class Main {
         body.write(ByteBuffer.allocate(2).putShort((short) 03).array()); //error_code ==> UNKNOWN_TOPIC_OR_PARTITION
         body.write(topic_name_length);                                    // name length:
         body.write(ByteBuffer.allocate(topic_name_length - 1).putShort((short) topic_name).array()); // topic name 
-        body.write(ByteBuffer.allocate(16).putShort((short) 0).array()) //topic_id
+        body.write(ByteBuffer.allocate(16).putShort((short) 0).array()); //topic_id
         body.write(ByteBuffer.allocate(2).putShort((short) 0).array()); //is_internal
         body.write(1);                                                   // partitions array
         body.write(ByteBuffer.allocate(4).putShort((short) 0).array()); //topic_authorized_operations
