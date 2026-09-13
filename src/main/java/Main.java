@@ -43,6 +43,7 @@ public class Main {
         byte[] apiVersion = in.readNBytes(2);
         int correlationId = ByteBuffer.wrap(in.readNBytes(4)).getInt();
 
+        /
         // ab tak 8 bytes padh liye (apiKey + apiVersion + correlationId)
         // baaki bacha hua request body (client_id, software name/version, tag_buffer) discard karo
         // int remaining = requestMessageSize - 8;
