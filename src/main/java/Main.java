@@ -55,7 +55,7 @@ public class Main {
 
         ByteArrayOutputStream body = new ByteArrayOutputStream();
         body.write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
-        body.write(2);                                                  // api_keys: COMPACT_ARRAY length (1 entry -> N+1)
+        body.write(3);                                                  // api_keys: COMPACT_ARRAY length (1 entry -> N+1)
         body.write(ByteBuffer.allocate(2).putShort((short) 18).array()); // api_key: 18 (ApiVersions)
         body.write(ByteBuffer.allocate(2).putShort((short) 0).array());  // min_version
         body.write(ByteBuffer.allocate(2).putShort((short) 4).array());  // max_version
