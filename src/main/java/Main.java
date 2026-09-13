@@ -49,16 +49,19 @@ public class Main {
         // if (remaining > 0) {
         //   in.readNBytes(remaining);
         // }
-        byte[] client_id = in.readNBytes(2);
-        byte[] contents = in.readNBytes(9);
-        byte[] tag_buffer = in.readNBytes(1);
-        int array_length = in.readNBytes(1)[0] & 0xFF;
-        int topic_name_length = in.readNBytes(1)[0] & 0xFF;
-        byte[] topic_name = in.readNBytes(topic_name_length - 1);
-        int remaining = requestMessageSize - 8 - 2 - 9 - 1 - 1 - 1 - (topic_name_length - 1);
-        if (remaining > 0) {
-          in.readNBytes(remaining);
-        } 
+     int clientIdLength = ByteBuffer.wrap(in.readNBytes(2)).getShort(); // NULLABLE_STRING: 2-byte length
+byte[] clientId = in.readNBytes(clientIdLength);                    // then that many bytes
+byte[] headerTagBuffer = in.readNBytes(1);                          // request header v2 TAG_BUFFER
+
+int array_length = in.readNBytes(1)[0] & 0xFF;
+int topic_name_length = in.readNBytes(1)[0] & 0xFF;
+byte[] topic_name = in.readNBytes(topic_name_length - 1);
+byte[] topicTagBuffer = in.readNBytes(1);   // tag_buffer after each topic entry — you're currently not consuming this either
+
+int remaining = requestMessageSize - 8 - 2 - clientIdLength - 1 - 1 - 1 - (topic_name_length - 1) - 1;
+if (remaining > 0) {
+  in.readNBytes(remaining); // consumes ResponsePartitionLimit (4 bytes) + cursor (1 byte) + body tag_buffer (1 byte)
+}
 
         short apiVersionValue = ByteBuffer.wrap(apiVersion).getShort();
         short errorCode = (apiVersionValue >= 0 && apiVersionValue <= 4) ? (short) 0 : (short) 35;
