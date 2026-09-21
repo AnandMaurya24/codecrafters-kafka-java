@@ -2,15 +2,20 @@ import dto.RequestHeader;
 import handler.ApiHandler;
 import handler.ApiVersionsHandler;
 import handler.DescribeTopicPartitionsHandler;
+import metadata.ClusterMetadata;
+import metadata.ClusterMetadataReader;
+import util.PropertiesLoader;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -20,7 +25,8 @@ public class Main {
     System.err.println("Logs from your program will appear here!");
 
     int port = 9092;
-    Map<Short, ApiHandler> handlers = buildHandlerRegistry();
+    ClusterMetadata clusterMetadata = loadClusterMetadata(args.length > 0 ? args[0] : null);
+    Map<Short, ApiHandler> handlers = buildHandlerRegistry(clusterMetadata);
     ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor(); // Java 21+; agar purana Java hai to newFixedThreadPool(50) use karo
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -37,10 +43,17 @@ public class Main {
     }
   }
 
-  private static Map<Short, ApiHandler> buildHandlerRegistry() {
+  private static ClusterMetadata loadClusterMetadata(String configPath) {
+    Properties config = PropertiesLoader.load(configPath);
+    String logDir = config.getProperty("log.dirs", "/tmp/kraft-combined-logs").split(",")[0].trim();
+    Path metadataLogFile = Path.of(logDir, "__cluster_metadata-0", "00000000000000000000.log");
+    return ClusterMetadataReader.readSafely(metadataLogFile);
+  }
+
+  private static Map<Short, ApiHandler> buildHandlerRegistry(ClusterMetadata clusterMetadata) {
     List<ApiHandler> handlers = new ArrayList<>();
     handlers.add(new ApiVersionsHandler(handlers)); // sees this same live list, itself included
-    handlers.add(new DescribeTopicPartitionsHandler());
+    handlers.add(new DescribeTopicPartitionsHandler(clusterMetadata));
     return handlers.stream().collect(Collectors.toMap(h -> h.apiKey().getKey(), h -> h));
   }
 
