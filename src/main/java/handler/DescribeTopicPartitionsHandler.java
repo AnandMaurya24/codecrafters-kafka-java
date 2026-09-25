@@ -11,6 +11,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,35 +36,45 @@ public class DescribeTopicPartitionsHandler implements ApiHandler {
         //   response_partition_limit: INT32
         //   cursor: nullable
         //   tag_buffer
-        in.readNBytes(1);                                   // topics array length (entries+1), unused
-        int topicNameLength = in.readNBytes(1)[0] & 0xFF;    // compact string length (len+1)
-        byte[] topicNameBytes = in.readNBytes(topicNameLength - 1);
-        in.readNBytes(1); // tag_buffer after this topic entry
+        int topicsArrayLength = (in.readNBytes(1)[0] & 0xFF) - 1; // entries+1 -> N
 
         int consumedSoFar = 8                          // apiKey+apiVersion+correlationId
                 + 2 + header.clientIdLength()           // client_id length prefix + content
                 + 1                                     // request header tag_buffer
-                + 1                                     // topics array length byte
-                + 1                                     // topic_name length byte
-                + (topicNameLength - 1)                 // topic_name content
-                + 1;                                    // topic entry tag_buffer
+                + 1;                                    // topics array length byte
+
+        List<String> requestedTopicNames = new ArrayList<>(topicsArrayLength);
+        for (int i = 0; i < topicsArrayLength; i++) {
+            int topicNameLength = in.readNBytes(1)[0] & 0xFF;    // compact string length (len+1)
+            byte[] topicNameBytes = in.readNBytes(topicNameLength - 1);
+            in.readNBytes(1); // tag_buffer after this topic entry
+
+            requestedTopicNames.add(new String(topicNameBytes, StandardCharsets.UTF_8));
+            consumedSoFar += 1 + (topicNameLength - 1) + 1; // length byte + name content + entry tag_buffer
+        }
+
         int remaining = header.requestMessageSize() - consumedSoFar;
         if (remaining > 0) {
             in.readNBytes(remaining); // response_partition_limit + cursor + body tag_buffer
         }
 
-        String topicName = new String(topicNameBytes, StandardCharsets.UTF_8);
-        Optional<TopicMetadata> topic = clusterMetadata.findByName(topicName);
+        List<String> sortedTopicNames = new ArrayList<>(requestedTopicNames);
+        sortedTopicNames.sort(Comparator.naturalOrder());
 
         ByteArrayOutputStream body = new ByteArrayOutputStream();
-        body.write(0);                                             // response header tag_buffer
-        body.write(ByteBuffer.allocate(4).putInt(0).array());       // throttle_time_ms
-        body.write(2);                                              // topics array length (1 entry -> 2)
+        body.write(0);                                                    // response header tag_buffer
+        body.write(ByteBuffer.allocate(4).putInt(0).array());              // throttle_time_ms
+        body.write(sortedTopicNames.size() + 1);                           // topics array length (compact)
 
-        if (topic.isPresent()) {
-            writeKnownTopic(body, topicNameLength, topicNameBytes, topic.get());
-        } else {
-            writeUnknownTopic(body, topicNameLength, topicNameBytes);
+        for (String topicName : sortedTopicNames) {
+            byte[] topicNameBytes = topicName.getBytes(StandardCharsets.UTF_8);
+            int topicNameLength = topicNameBytes.length + 1;
+            Optional<TopicMetadata> topic = clusterMetadata.findByName(topicName);
+            if (topic.isPresent()) {
+                writeKnownTopic(body, topicNameLength, topicNameBytes, topic.get());
+            } else {
+                writeUnknownTopic(body, topicNameLength, topicNameBytes);
+            }
         }
 
         body.write(0xFF); // next_cursor (-1 / null)
