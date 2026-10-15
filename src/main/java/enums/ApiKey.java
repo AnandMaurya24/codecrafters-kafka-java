@@ -2,7 +2,8 @@ package enums;
 
 public enum ApiKey {
     API_VERSIONS((short) 18, (short) 0, (short) 4),
-    DESCRIBE_TOPIC_PARTITIONS((short) 75, (short) 0, (short) 0);
+    DESCRIBE_TOPIC_PARTITIONS((short) 75, (short) 0, (short) 0),
+    FETCH((short) 1, (short) 0, (short) 16);
 
     private final short key;
     private final short minVersion;

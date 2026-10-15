@@ -10,15 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public class ApiVersionsHandler implements ApiHandler {
-    private final List<ApiHandler> registeredHandlers;
-
-    /**
-     * @param registeredHandlers the live registry from Main; read at request time, so it can
-     *                           include this handler itself as long as it's populated by then.
-     */
-    public ApiVersionsHandler(List<ApiHandler> registeredHandlers) {
-        this.registeredHandlers = registeredHandlers;
-    }
+   
 
     @Override
     public ApiKey apiKey() {
@@ -41,10 +33,10 @@ public class ApiVersionsHandler implements ApiHandler {
 
         ByteArrayOutputStream body = new ByteArrayOutputStream();
         body.write(ByteBuffer.allocate(2).putShort(errorCode).array()); // error_code
-        body.write(registeredHandlers.size() + 1);                     // COMPACT_ARRAY length (N entries -> N+1)
+        body.write(ApiKey.values().length + 1);                     // COMPACT_ARRAY length (N entries -> N+1)
 
-        for (ApiHandler handler : registeredHandlers) {
-            ApiKey key = handler.apiKey();
+        for (ApiKey key : ApiKey.values()) {
+            // ApiKey key = handler.apiKey();
             body.write(ByteBuffer.allocate(2).putShort(key.getKey()).array());
             body.write(ByteBuffer.allocate(2).putShort(key.getMinVersion()).array());
             body.write(ByteBuffer.allocate(2).putShort(key.getMaxVersion()).array());
