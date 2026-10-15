@@ -54,7 +54,7 @@ public class Main {
     List<ApiHandler> handlers = new ArrayList<>();
     // handlers.add(new ApiVersionsHandler(handlers)); // sees this same live list, itself included
     handlers.add(new DescribeTopicPartitionsHandler(clusterMetadata));
-    return handlers.stream       collect(Collectors.toMap(h -> h.apiKey().getKey(), h -> h));
+    return handlers.stream().collect(Collectors.toMap(h -> h.apiKey().getKey(), h -> h));
   }
 
   private static void handleClient(Socket clientSocket, Map<Short, ApiHandler> handlers) {
